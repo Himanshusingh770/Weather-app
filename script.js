@@ -6,61 +6,37 @@ const weatherDescription = document.getElementById('description');
 const locationName = document.getElementById('location');
 const weatherIcon = document.getElementById('weather-icon');
 const cityErrorMessage = document.getElementById('error-message');
-const locationErrorMessage = document.getElementById('location-error-message'); 
+const locationErrorMessage = document.getElementById('location-error-message');
 const loader = document.getElementById('loader');
 const weatherDetails = document.querySelector('.weather-details');
 
-// Fetch weather data from API
-async function fetchWeatherData(url) {
-    try {
-        loader.style.display = 'block';
-        weatherIcon.style.display = 'none';
-        weatherTemperature.textContent = '';
-        weatherDescription.textContent = '';
-        locationName.textContent = '';
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('City not found');
-        }
-        const data = await response.json();
-
-        cityErrorMessage.style.display = 'none';
-        updateWeatherDisplay(data);
-    } catch (error) {
-        // Display error message below the search button
-        cityErrorMessage.textContent = error.message;
-        cityErrorMessage.style.display = 'block';
-        weatherIcon.style.display = 'none';
-        weatherDetails.style.display = 'none';
-    } finally {
-        loader.style.display = 'none';
-    }
+// Utility functions
+function kelvinToCelsius(kelvin) {
+    return Math.round(kelvin - 273.15);
 }
 
-// Display the fetched weather data in the UI
+// Update weather display in the UI
 function updateWeatherDisplay(data) {
     console.log(data);
-    
+
     const temperatureInCelsius = data.main && data.main.temp ? kelvinToCelsius(data.main.temp) : 'N/A';
     weatherTemperature.textContent = `${temperatureInCelsius}°C`;
-
     weatherDescription.textContent = data.weather[0].description;
     locationName.textContent = `${data.name}, ${data.sys.country}`;
 
-    const iconCode = data.weather[0].icon; 
-    weatherIcon.src = `./images/${iconCode}.png`; 
+    const iconCode = data.weather[0].icon;
+    weatherIcon.src = `./images/${iconCode}.png`;
     weatherIcon.style.display = 'block';
 
     // Update additional details
     document.getElementById('humidity').textContent = data.main.humidity;
-    document.getElementById('wind-speed').textContent = (data.wind.speed * 3.6).toFixed(2); 
+    document.getElementById('wind-speed').textContent = (data.wind.speed * 3.6).toFixed(2);
     document.getElementById('pressure').textContent = data.main.pressure;
     document.getElementById('feels-like').textContent = kelvinToCelsius(data.main.feels_like);
 
     // Change background based on sunrise and sunset
-    const currentTime = new Date().getTime() / 1000; 
-    const sunrise = data.sys.sunrise;
-    const sunset = data.sys.sunset;
+    const currentTime = new Date().getTime() / 1000;
+    const { sunrise, sunset } = data.sys;
 
     if (currentTime >= sunrise && currentTime < sunset) {
         document.body.classList.add('day');
@@ -71,8 +47,32 @@ function updateWeatherDisplay(data) {
     }
 }
 
-function kelvinToCelsius(kelvin) {
-    return Math.round(kelvin - 273.15);
+// Fetch weather data from API
+async function fetchWeatherData(url) {
+    try {
+        loader.style.display = 'block';
+        weatherIcon.style.display = 'none';
+        weatherTemperature.textContent = '';
+        weatherDescription.textContent = '';
+        locationName.textContent = '';
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('City not found');
+        }
+
+        const data = await response.json();
+        cityErrorMessage.style.display = 'none';
+        updateWeatherDisplay(data);
+    } catch (error) {
+        // Display error message
+        cityErrorMessage.textContent = error.message;
+        cityErrorMessage.style.display = 'block';
+        weatherIcon.style.display = 'none';
+        weatherDetails.style.display = 'none';
+    } finally {
+        loader.style.display = 'none';
+    }
 }
 
 // Fetch weather data based on coordinates (geolocation)
@@ -108,6 +108,7 @@ function onLocationError(error) {
 window.onload = () => {
     loader.style.display = 'none';
     weatherDetails.style.display = 'none';
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
     } else {
@@ -117,6 +118,7 @@ window.onload = () => {
     }
 }
 
+// Event listener for search button
 document.getElementById('search-btn').addEventListener('click', () => {
     const city = document.getElementById('location-input').value.trim();
     if (city) {
