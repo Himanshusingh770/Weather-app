@@ -29,10 +29,14 @@ function updateWeatherDisplay(data) {
     weatherIcon.style.display = 'block';
 
     // Update additional details
-    document.getElementById('humidity').textContent = data.main.humidity;
-    document.getElementById('wind-speed').textContent = (data.wind.speed * 3.6).toFixed(2);
-    document.getElementById('pressure').textContent = data.main.pressure;
-    document.getElementById('feels-like').textContent = kelvinToCelsius(data.main.feels_like);
+    document.getElementById('humidity').textContent = `Humidity: ${data.main.humidity}%`;
+    document.getElementById('wind-speed').textContent = `Wind Speed: ${(data.wind.speed * 3.6).toFixed(2)} km/h`;
+    document.getElementById('pressure').textContent = `Pressure: ${data.main.pressure} hPa`;
+    document.getElementById('feels-like').textContent = `Feels Like: ${kelvinToCelsius(data.main.feels_like)}°C`;
+
+    // Show weather details and hide loader
+    weatherDetails.style.display = 'grid';
+    loader.style.display = 'none';
 
     // Change background based on sunrise and sunset
     const currentTime = new Date().getTime() / 1000;
@@ -50,11 +54,9 @@ function updateWeatherDisplay(data) {
 // Fetch weather data from API
 async function fetchWeatherData(url) {
     try {
+        // Show loader and hide weather details before fetching
         loader.style.display = 'block';
-        weatherIcon.style.display = 'none';
-        weatherTemperature.textContent = '';
-        weatherDescription.textContent = '';
-        locationName.textContent = '';
+        weatherDetails.style.display = 'none';
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -71,7 +73,10 @@ async function fetchWeatherData(url) {
         weatherIcon.style.display = 'none';
         weatherDetails.style.display = 'none';
     } finally {
-        loader.style.display = 'none';
+        // Hide loader if it wasn't already hidden
+        if (loader.style.display !== 'none') {
+            loader.style.display = 'none';
+        }
     }
 }
 
@@ -122,6 +127,9 @@ window.onload = () => {
 document.getElementById('search-btn').addEventListener('click', () => {
     const city = document.getElementById('location-input').value.trim();
     if (city) {
+        // Show loader and hide weather details before starting search
+        loader.style.display = 'block';
+        weatherDetails.style.display = 'none';
         retrieveWeatherByCity(city);
     } else {
         alert('Please enter a city name');
