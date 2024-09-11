@@ -10,15 +10,29 @@ const locationErrorMessage = document.getElementById('location-error-message');
 const loader = document.getElementById('loader');
 const weatherDetails = document.querySelector('.weather-details');
 
+let isFetching = false; // Prevent multiple API calls
+let locationAccessShown = false; // Flag to track if location access message has been shown
+
 // Utility functions
 function kelvinToCelsius(kelvin) {
     return Math.round(kelvin - 273.15);
 }
 
+// Clear weather data
+function clearWeatherData() {
+    weatherTemperature.textContent = '';
+    weatherDescription.textContent = '';
+    locationName.textContent = '';
+    weatherIcon.src = '';
+    weatherIcon.style.display = 'none';
+    document.getElementById('humidity').textContent = '';
+    document.getElementById('wind-speed').textContent = '';
+    document.getElementById('pressure').textContent = '';
+    document.getElementById('feels-like').textContent = '';
+}
+
 // Update weather display in the UI
 function updateWeatherDisplay(data) {
-    console.log(data);
-
     const temperatureInCelsius = data.main && data.main.temp ? kelvinToCelsius(data.main.temp) : 'N/A';
     weatherTemperature.textContent = `${temperatureInCelsius}°C`;
     weatherDescription.textContent = data.weather[0].description;
@@ -29,10 +43,10 @@ function updateWeatherDisplay(data) {
     weatherIcon.style.display = 'block';
 
     // Update additional details
-    document.getElementById('humidity').textContent = `Humidity: ${data.main.humidity}%`;
-    document.getElementById('wind-speed').textContent = `Wind Speed: ${(data.wind.speed * 3.6).toFixed(2)} km/h`;
-    document.getElementById('pressure').textContent = `Pressure: ${data.main.pressure} hPa`;
-    document.getElementById('feels-like').textContent = `Feels Like: ${kelvinToCelsius(data.main.feels_like)}°C`;
+    document.getElementById('humidity').textContent = `${data.main.humidity}`;
+    document.getElementById('wind-speed').textContent = `${(data.wind.speed * 3.6).toFixed(2)}`;
+    document.getElementById('pressure').textContent = `${data.main.pressure}`;
+    document.getElementById('feels-like').textContent = `${kelvinToCelsius(data.main.feels_like)}`;
 
     // Show weather details and hide loader
     weatherDetails.style.display = 'grid';
@@ -53,30 +67,29 @@ function updateWeatherDisplay(data) {
 
 // Fetch weather data from API
 async function fetchWeatherData(url) {
+    if (isFetching) return; // Prevent multiple API calls
+    isFetching = true;
+
     try {
-        // Show loader and hide weather details before fetching
         loader.style.display = 'block';
         weatherDetails.style.display = 'none';
+        cityErrorMessage.style.display = 'none'; // Hide city error message if showing
 
         const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('City not found');
-        }
+        if (!response.ok) throw new Error('City not found');
 
         const data = await response.json();
         cityErrorMessage.style.display = 'none';
         updateWeatherDisplay(data);
     } catch (error) {
-        // Display error message
+        clearWeatherData(); // Clear previous weather data
         cityErrorMessage.textContent = error.message;
         cityErrorMessage.style.display = 'block';
         weatherIcon.style.display = 'none';
         weatherDetails.style.display = 'none';
     } finally {
-        // Hide loader if it wasn't already hidden
-        if (loader.style.display !== 'none') {
-            loader.style.display = 'none';
-        }
+        isFetching = false;
+        loader.style.display = 'none';
     }
 }
 
@@ -92,20 +105,20 @@ function retrieveWeatherByCity(city) {
     fetchWeatherData(url);
 }
 
-// Function to handle location success
+// Handle location success
 function onLocationSuccess(position) {
     const { latitude, longitude } = position.coords;
     retrieveWeatherByCoordinates(latitude, longitude);
-
-    // Clear any previous error messages
     locationErrorMessage.style.display = 'none';
-    weatherDetails.style.display = 'grid';
+    locationAccessShown = true; // Update flag when location is successfully used
 }
 
-// Function to handle location error
-function onLocationError(error) {
-    locationErrorMessage.textContent = 'Location is not enabled. Please allow location access.';
-    locationErrorMessage.style.display = 'block';
+// Handle location error
+function onLocationError() {
+    if (!locationAccessShown) { // Only show location access message if not shown before
+        locationErrorMessage.textContent = 'Location is not enabled. Please allow location access.';
+        locationErrorMessage.style.display = 'block';
+    }
     weatherIcon.style.display = 'none';
 }
 
@@ -127,9 +140,10 @@ window.onload = () => {
 document.getElementById('search-btn').addEventListener('click', () => {
     const city = document.getElementById('location-input').value.trim();
     if (city) {
-        // Show loader and hide weather details before starting search
         loader.style.display = 'block';
         weatherDetails.style.display = 'none';
+        cityErrorMessage.style.display = 'none'; // Hide city error message if showing
+        locationErrorMessage.style.display = 'none'; // Hide location error message if showing
         retrieveWeatherByCity(city);
     } else {
         alert('Please enter a city name');
