@@ -2,10 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=!, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+    <div class="weather-container">
+        <div class="weather-box">
+            <h3>Weather</h3>
+
+            <div class="search-box" >
+                <input type="text" id="location-input" placeholder="Enter city name">
+                <button id="search-btn">Search</button>
+                <p id="error-message"></p>
+            </div>
+            <p id="location-error-message"></p>
+            
+            <div id="loader" class="loader"></div>
+
+            <img id="weather-icon" src="" alt="Weather Icon" style="display: none;">
+            <h2 id="temperature"></h2>
+            <p id="description"></p>
+            <p id="location"></p>
+
+            <div class="weather-details" style="display: none;">
+                <div class="detail">
+                    <img src="images/humidity.png" alt="Humidity Icon">
+                    <p>Humidity: <span id="humidity"></span>%</p>
+                </div>
+                <div class="detail">
+                    <img src="images/wind.png" alt="Wind Speed Icon">
+                    <p>Wind Speed: <span id="wind-speed"></span> km/h</p>
+                </div>
+                <div class="detail">
+                    <img src="images/air.png" alt="Pressure Icon">
+                    <p>Pressure: <span id="pressure"></span> hPa</p>
+                </div>
+                <div class="detail">
+                    <img src="images/feel-like.png" alt="Feels Like Icon">
+                    <p>Feels Like: <span id="feels-like"></span>°C</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
